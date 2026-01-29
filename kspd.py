@@ -46,9 +46,6 @@ class Path:
     self.lb = 0
     self.cls = None
 
-  def calculate_lb(LB1, LB2):
-    return max(LB1, LB2)
-
   def LB1(self, node, distances):
     return self.length + distances[node] 
 
@@ -93,14 +90,14 @@ class Path:
 
     return flag
   
-def tail(self):
-  return self.route[-1] if self.route else None
+  def tail(self):
+    return self.route[-1] if self.route else None
 
-def head(self):
-  return self.route[0] if self.route else None
+  def head(self):
+    return self.route[0] if self.route else None
 
-def contains(self, vertex):
-  return vertex in self.route
+  def contains(self, vertex):
+    return vertex in self.route
 
 
 def ConstructPartialSPT(graph, v):
