@@ -2,6 +2,42 @@ import networkx as nx
 import heapq
 import pandas as pd
 
+def print_state_table(LQ, title=None, node_names=None):
+    rows = []
+
+    for vertex, lq in LQ.items():
+        if not lq:
+            continue
+
+        p = lq[0]  # en iyi path
+
+        route_str = "->".join(
+            node_names[v] if node_names else str(v)
+            for v in p.route
+        )
+
+        if p.cls:
+            cls_str = f"{p.cls[0]}:{node_names[p.cls[1]] if node_names else p.cls[1]}"
+        else:
+            cls_str = "-"
+
+        rows.append({
+            "Q": f"LQ[{node_names[vertex] if node_names else vertex}]",
+            "cls": cls_str,
+            "rt": route_str,
+            "len": p.length,
+            "lb": p.lb
+        })
+
+    df = pd.DataFrame(rows, columns=["Q", "cls", "rt", "len", "lb"])
+
+    if title:
+        print("\n" + "=" * 70)
+        print(title)
+        print("=" * 70)
+
+    display(df)
+
 class GraphState:
 	def __init__(self, graph_reverse, destination):
 		self.graph_reverse = graph_reverse
@@ -401,4 +437,5 @@ if __name__ == "__main__":
                 print(f"  Similarity with Path {j+1}: {sim:.2f}")
     
     print("\n" + "=" * 60)
+
     print(f"Total paths found: {len(result)}")
