@@ -91,10 +91,6 @@ class Path:
 		return True
 
 def ConstructPartialSPT(graph_state, v):
-
-    print("="*60)
-    print("ConstructPartialSPT ye geldim")
-
     if graph_state.isSettled[v]:
         return graph_state.distances[v]
 
@@ -127,10 +123,6 @@ def reverse(graph):
 	return Gr
 
 def dijkstra(graph, src, dest):
-
-    print("="*60)
-    print("dijkstra ya geldim")
-
     if src == dest:
         path = Path()
         path.route = [src]
@@ -173,10 +165,6 @@ def dijkstra(graph, src, dest):
     return None
 
 def ExtendPath(path, graph, graph_state, LQ, global_PQ, covered_vertices):
-
-    print("="*60)
-    print("ExtendPath e geldim")
-
     tail = path.tail()
 
     if tail in LQ:
@@ -225,11 +213,7 @@ def ExtendPath(path, graph, graph_state, LQ, global_PQ, covered_vertices):
     return True
 
 def AdjustPath(path, LQ, result_set, dest):
-
-    print("="*60)
-    print("AdjustPath e geldim")
-
-    if path.cls is None:
+	if path.cls is None:
         return
 
     _, deviation_vertex = path.cls
@@ -260,10 +244,6 @@ def AdjustPath(path, LQ, result_set, dest):
                             continue
 
 def FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest, covered_vertices):
-
-    print("="*60)
-    print("FindNextPath e geldim")
-
     while global_PQ:
 
         _, _, current_LQ = heapq.heappop(global_PQ)
@@ -298,10 +278,6 @@ def FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest,
     return None
 
 def FindKSPD(graph, graph_reverse, src, dest, k, threshold):
-
-	print("="*60)
-	print("KSPD ye geldim")
-
 	graph_state = GraphState(graph_reverse=graph_reverse, destination=dest)
 	result_set = []
 	global_PQ = []
@@ -367,48 +343,6 @@ def FindKSPD(graph, graph_reverse, src, dest, k, threshold):
 
 
 	while len(result_set) < k and global_PQ:
-		# Prepare lists to hold path details from global_PQ
-		q_lbs = [] # This will hold the 'Q' column data, which seems to be the LB from global_PQ's element
-		path_routes = []
-		path_classes = []
-		path_lengths = []
-		path_lbs_from_path = [] # This will hold the 'lb' column data from the Path object
-
-		# Iterate through the elements currently in global_PQ
-		# global_PQ contains tuples: (smallest_lb_in_LQ, id_of_LQ, LQ_heap)
-		# To display, it's better to sort them by their lb for a clearer view
-		sorted_global_pq_elements = sorted(global_PQ, key=lambda x: x[0])
-
-
-		for lb_val_from_global_pq, lq_id, lq_heap in sorted_global_pq_elements:
-			if lq_heap: # Ensure the local queue is not empty
-				# Get the path with the smallest lb from this local queue
-				top_path_in_lq = lq_heap[0]
-
-				q_lbs.append(lb_val_from_global_pq) # The LB value stored in global_PQ
-				path_routes.append(str(top_path_in_lq.route)) # Convert list to string for display
-				path_classes.append(str(top_path_in_lq.cls)) # Convert tuple/None to string
-				path_lengths.append(top_path_in_lq.length)
-				path_lbs_from_path.append(top_path_in_lq.lb) # The LB value from the Path object itself
-			else:
-				# Handle cases where an LQ in global_PQ might be empty (should ideally not happen if logic is sound)
-				q_lbs.append('N/A')
-				path_routes.append('N/A')
-				path_classes.append('N/A')
-				path_lengths.append('N/A')
-				path_lbs_from_path.append('N/A')
-
-		d = {
-			'Q': q_lbs, # The lb stored in global_PQ for that local queue
-			'route': path_routes,
-			'cls': path_classes,
-			'len': path_lengths,
-			'lb': path_lbs_from_path, # The lb of the path itself
-		}
-		df = pd.DataFrame(data=d)
-		print("Current state of global_PQ (top paths from each local queue, sorted by LB):")
-		display(df) # Use display(df) for better formatted output
-
 		new_path = FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest, covered_vertices)
 		if new_path and new_path.Sim(threshold=threshold, result_set=result_set):
 			result_set.append(new_path)
