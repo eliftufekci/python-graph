@@ -2,6 +2,15 @@ import networkx as nx
 import heapq
 import pandas as pd
 
+def print_global(pq):
+    c = pq.copy()
+    while c:
+        print(heapq.heappop(c))
+
+def print_local(pq):
+    c = pq.copy()
+    while c:
+        print(heapq.heappop(c))
 
 class GraphState:
     def __init__(self, graph_reverse, destination):
@@ -30,7 +39,7 @@ class Path:
         self.isActive = True
 
     def __str__(self):
-        return f"Route: {self.route}, Length: {self.length}, LB: {self.lb}, Class: {self.cls}"
+        return f"Route: {self.route}, Length: {self.length}, LB: {self.lb}, Class: {self.cls}, isActive: {self.isActive}"
     
     def __repr__(self):
         return str(self)
@@ -178,7 +187,7 @@ def ExtendPath(path, graph, graph_state, LQ, global_PQ, covered_vertices):
 
     for neighbor in graph[tail]:
         if neighbor not in path.route and neighbor != graph_state.parent.get(tail):
-            print("eğer neighbor rotada yoksa ve benim parentim değilse uzatıyorum")
+            print("eğer neighbor rotada yoksa ve benim parentim değil o yüzden uzatıyorum")
             new_path = path.copy()
             new_path.route.append(neighbor)
 
@@ -192,7 +201,7 @@ def ExtendPath(path, graph, graph_state, LQ, global_PQ, covered_vertices):
                 covered_vertices[class_key] = set()
 
             if neighbor in covered_vertices[class_key]:
-                print("eğer neighbor'un class keyi covered vertices içindeyse o yol inactive olmalı")
+                print("eğer neighbor'un class keyi covered vertices içinde o yüzden yol inactive olmalı")
                 new_path.isActive = False
             else:
                 covered_vertices[class_key].add(neighbor)
@@ -202,13 +211,11 @@ def ExtendPath(path, graph, graph_state, LQ, global_PQ, covered_vertices):
             heapq.heappush(LQ[neighbor], new_path)
 
             print("LQ ya newpathi push ettim")
-            print(LQ)
+            for x in LQ.values():
+                print_local(x)
 
             print("global_PQ nun durumu")
-            for _,_,lq in global_PQ:
-                for p in lq:
-                    print(p)
-                print()
+            print_global(global_PQ)
 
             # burada LQ da yaptığım değişiklik zaten global olanda görünüyor, tekrar pushlamam aynı şeyi 2 defa pushlamam anlamına geliyor
             # if LQ[neighbor]:
@@ -239,7 +246,9 @@ def AdjustPath(path, LQ, result_set, dest):
     print("Adjust path'e geldim")
 
     print("LQ'nun durumu")
-    print(LQ)
+    for x in LQ.keys():
+        print_local(LQ[x])
+
 
     if path.cls is None:
         return
@@ -252,50 +261,45 @@ def AdjustPath(path, LQ, result_set, dest):
                 if not p.isActive:
                     print(f"{p} pathi domine edilmiş, onu activate yapıyoruz")
                     # Check if this path was dominated by current path
-                    if p.cls == path.cls and p.length >= path.length:
+                    if p.cls == path.cls:
                         p.isActive = True
 
     if path.tail() == dest:
         print(f"{path}, destinationa ulaşmış, prefix güncellemesi yapıcaz")
         path_id = len(result_set) + 1
-        
-        #emin değilim
-        for vertex in path.route:
-            if vertex in LQ:
-                for p in LQ[vertex]:
-                    print(f"p pathi: {p}, bulunan yeni path: {path} ile aynı prefixe sahip")
-                    # Check if path has the prefix
-                    if len(p.route) > 0:
-                        # Find if vertex is in p's route
-                        try:
-                            vertex_idx = path.route.index(vertex)
-                            if len(p.route) >= vertex_idx + 1:
-                                if p.route[:vertex_idx + 1] == path.route[:vertex_idx + 1]:
-                                    print(f"{p.route[:vertex_idx + 1]} ile {path.route[:vertex_idx + 1]} aynı yani")
-                                    print(f"classı {(path_id, vertex)} olarak değiştiriyoruz")
-                                    p.cls = (path_id, vertex)
-                        except ValueError:
-                            continue
+
+        for lq in LQ.values():
+            for p in lq:
+                for vertex in path.route:
+                    try:
+                        path_index = path.route.index(vertex)
+                        p_index = p.route.index(vertex)
+                        if p.route[:p_index + 1] == path.route[:path_index + 1] and len(p.route[:p_index + 1])>1:
+                            print(f"p pathi: {p}, bulunan yeni path: {path} ile aynı prefixe sahip")
+                            print(f"{p.route[:p_index + 1]} ile {path.route[:path_index + 1]} aynı yani")
+                            print(f"class'ı {(path_id, vertex)} olarak değiştiriyoruz")
+                            p.cls = (path_id, vertex)
+                    except ValueError:
+                        continue
+
 
 def FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest, covered_vertices):
     global number_of_paths_explored
 
     print("Find next pathe geldim")
     print("Find Next path başında global_PQ nun durumu")
-    for _,_,lq in global_PQ:
-        for p in lq:
-            print(p)
-        print()
+    print_global(global_PQ)
 
     print("LQ nun durumu: ")
-    print(LQ)
+    for x in LQ.keys():
+        print_local(LQ[x])
+
 
     while global_PQ:
         _, _, current_LQ = heapq.heappop(global_PQ)
 
         print("Sırayla her iterasyonda current lq içindeki pathler")
-        for p in current_LQ:
-            print(p)
+        print_local(current_LQ)
         
         if not current_LQ:
             continue
@@ -308,11 +312,12 @@ def FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest,
         if current_LQ:
             heapq.heappush(global_PQ, (current_LQ[0].lb, id(current_LQ), current_LQ))
             print("o an işlenen path çıkarıldıktan sonra tekrar global_PQ ya push yapılıyor: ")
-            for _,_,lq in global_PQ:
-                for p in lq:
-                    print(p)
-                print()
+            print_global(global_PQ)
 
+        if not current_path.isActive:
+            print("path inactive olduğu için geçiyoruz")
+            heapq.heappush(current_LQ, current_path)
+            continue
         
         while current_path.tail() != dest:
             print("tail dest e ulaşana kadar while içindeyiz")
@@ -327,13 +332,9 @@ def FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest,
                 heapq.heappush(current_LQ, current_path)
                 if current_LQ:
                     heapq.heappush(global_PQ, (current_LQ[0].lb, id(current_LQ), current_LQ))
-                    print("LQ, global_PQ ya push ediliyor, son durum")
-                    for _,_,lq in global_PQ:
-                        for p in lq:
-                            print(p)
-                        print()
+                    print_global(global_PQ)
                 break
-            
+
             if not ExtendPath(path=current_path, graph=graph, graph_state=graph_state, LQ=LQ, global_PQ=global_PQ, covered_vertices=covered_vertices):
                 break
 
@@ -396,11 +397,9 @@ def FindKSPD(graph, graph_reverse, src, dest, k, threshold):
 
                 if LQ[tail]:
                     heapq.heappush(global_PQ, (LQ[tail][0].lb, id(LQ[tail]), LQ[tail]))
-                    ## DEBUG
     
-    for lq in global_PQ:
-        for p in lq:
-            print(p)              
+    print("find kspd nin ilk kısmının sonunda global pq durumu")
+    print_global(global_PQ)            
 
     while len(result_set) < k and global_PQ:
         new_path = FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest, covered_vertices)
