@@ -3,43 +3,6 @@ import heapq
 import pandas as pd
 
 
-def print_state_table(LQ, title=None, node_names=None):
-    rows = []
-
-    for vertex, lq in LQ.items():
-        if not lq:
-            continue
-
-        p = lq[0]  # en iyi path
-
-        route_str = "->".join(
-            node_names[v] if node_names else str(v)
-            for v in p.route
-        )
-
-        if p.cls:
-            cls_str = f"{p.cls[0]}:{node_names[p.cls[1]] if node_names else p.cls[1]}"
-        else:
-            cls_str = "-"
-
-        rows.append({
-            "Q": f"LQ[{node_names[vertex] if node_names else vertex}]",
-            "cls": cls_str,
-            "rt": route_str,
-            "len": p.length,
-            "lb": p.lb
-        })
-
-    df = pd.DataFrame(rows, columns=["Q", "cls", "rt", "len", "lb"])
-
-    if title:
-        print("\n" + "=" * 70)
-        print(title)
-        print("=" * 70)
-
-    display(df)
-
-
 class GraphState:
     def __init__(self, graph_reverse, destination):
         self.graph_reverse = graph_reverse
@@ -69,6 +32,9 @@ class Path:
     def __str__(self):
         return f"Route: {self.route}, Length: {self.length}, LB: {self.lb}, Class: {self.cls}"
     
+    def __repr__(self):
+        return str(self)
+
     def __lt__(self, other):
         return self.lb < other.lb 
     
@@ -77,9 +43,6 @@ class Path:
 
     def head(self):
         return self.route[0] if self.route else None
-
-    def contains(self, vertex):
-        return vertex in self.route
     
     def copy(self):
         new_path = Path()
@@ -203,15 +166,19 @@ def dijkstra(graph, src, dest):
     return None
 
 def ExtendPath(path, graph, graph_state, LQ, global_PQ, covered_vertices):
+    print("Extend pathe geldim")
+    print(f"işlediğim path {path}")
     tail = path.tail()
 
     if tail in LQ:
         for p in LQ[tail]:
             if p.cls == path.cls and p.length >= path.length and p.isActive:
+                print(f"p pathi: {p} ile extend edeceğim path {path} aynı sınıftalar ve extend edilen daha kısa olduğu için p yi inactive yapıyoruz")
                 p.isActive = False
 
     for neighbor in graph[tail]:
         if neighbor not in path.route and neighbor != graph_state.parent.get(tail):
+            print("eğer neighbor rotada yoksa ve benim parentim değilse uzatıyorum")
             new_path = path.copy()
             new_path.route.append(neighbor)
 
@@ -225,6 +192,7 @@ def ExtendPath(path, graph, graph_state, LQ, global_PQ, covered_vertices):
                 covered_vertices[class_key] = set()
 
             if neighbor in covered_vertices[class_key]:
+                print("eğer neighbor'un class keyi covered vertices içindeyse o yol inactive olmalı")
                 new_path.isActive = False
             else:
                 covered_vertices[class_key].add(neighbor)
@@ -233,24 +201,46 @@ def ExtendPath(path, graph, graph_state, LQ, global_PQ, covered_vertices):
                 LQ[neighbor] = []
             heapq.heappush(LQ[neighbor], new_path)
 
-            if LQ[neighbor]:
-                heapq.heappush(global_PQ, (LQ[neighbor][0].lb, id(LQ[neighbor]), LQ[neighbor]))
+            print("LQ ya newpathi push ettim")
+            print(LQ)
+
+            print("global_PQ nun durumu")
+            for _,_,lq in global_PQ:
+                for p in lq:
+                    print(p)
+                print()
+
+            # burada LQ da yaptığım değişiklik zaten global olanda görünüyor, tekrar pushlamam aynı şeyi 2 defa pushlamam anlamına geliyor
+            # if LQ[neighbor]:
+            #     heapq.heappush(global_PQ, (LQ[neighbor][0].lb, id(LQ[neighbor]), LQ[neighbor]))
+            #     print("global_PQ nun push sonrası durumu")
+            #     for _,_,lq in global_PQ:
+            #         for p in lq:
+            #             print(p)
+            #         print()
 
     parent = graph_state.parent.get(tail)
     if parent is None:
         return False
 
     if parent in path.route:
+        print("Cycle var, uzatamadık")
         return False
 
     path.route.append(parent)
     edge_weight = graph[tail][parent]['weight']
     path.edges[(tail, parent)] = edge_weight
     path.length += edge_weight
+    print(f"genişletmemi yaptım path şu hale geldi: {path}")
 
     return True
 
 def AdjustPath(path, LQ, result_set, dest):
+    print("Adjust path'e geldim")
+
+    print("LQ'nun durumu")
+    print(LQ)
+
     if path.cls is None:
         return
 
@@ -260,16 +250,20 @@ def AdjustPath(path, LQ, result_set, dest):
         if vertex in LQ:
             for p in LQ[vertex]:
                 if not p.isActive:
+                    print(f"{p} pathi domine edilmiş, onu activate yapıyoruz")
                     # Check if this path was dominated by current path
                     if p.cls == path.cls and p.length >= path.length:
                         p.isActive = True
 
     if path.tail() == dest:
+        print(f"{path}, destinationa ulaşmış, prefix güncellemesi yapıcaz")
         path_id = len(result_set) + 1
-
+        
+        #emin değilim
         for vertex in path.route:
             if vertex in LQ:
                 for p in LQ[vertex]:
+                    print(f"p pathi: {p}, bulunan yeni path: {path} ile aynı prefixe sahip")
                     # Check if path has the prefix
                     if len(p.route) > 0:
                         # Find if vertex is in p's route
@@ -277,45 +271,80 @@ def AdjustPath(path, LQ, result_set, dest):
                             vertex_idx = path.route.index(vertex)
                             if len(p.route) >= vertex_idx + 1:
                                 if p.route[:vertex_idx + 1] == path.route[:vertex_idx + 1]:
+                                    print(f"{p.route[:vertex_idx + 1]} ile {path.route[:vertex_idx + 1]} aynı yani")
+                                    print(f"classı {(path_id, vertex)} olarak değiştiriyoruz")
                                     p.cls = (path_id, vertex)
                         except ValueError:
                             continue
 
 def FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest, covered_vertices):
-    while global_PQ:
+    global number_of_paths_explored
 
+    print("Find next pathe geldim")
+    print("Find Next path başında global_PQ nun durumu")
+    for _,_,lq in global_PQ:
+        for p in lq:
+            print(p)
+        print()
+
+    print("LQ nun durumu: ")
+    print(LQ)
+
+    while global_PQ:
         _, _, current_LQ = heapq.heappop(global_PQ)
+
+        print("Sırayla her iterasyonda current lq içindeki pathler")
+        for p in current_LQ:
+            print(p)
         
         if not current_LQ:
             continue
         
         current_path = heapq.heappop(current_LQ)
+        number_of_paths_explored += 1
+
+        print(f"Find Next Path içinde o an işlenen path: {current_path}")
 
         if current_LQ:
             heapq.heappush(global_PQ, (current_LQ[0].lb, id(current_LQ), current_LQ))
+            print("o an işlenen path çıkarıldıktan sonra tekrar global_PQ ya push yapılıyor: ")
+            for _,_,lq in global_PQ:
+                for p in lq:
+                    print(p)
+                print()
+
         
         while current_path.tail() != dest:
+            print("tail dest e ulaşana kadar while içindeyiz")
+
             LB2 = current_path.LB2(threshold=threshold, result_set=result_set)
             
             if LB2 > current_path.lb:
                 current_path.lb = LB2
+                print("lb2 değeri büyük çıktı adjust path yapıcaz")
                 AdjustPath(path=current_path, LQ=LQ, result_set=result_set, dest=dest)
-
+                print(f"adjust path yaptıktan sonra elimizdeki current path {current_path}, bunu current_LQ ya push etmemiz lazım")
                 heapq.heappush(current_LQ, current_path)
                 if current_LQ:
                     heapq.heappush(global_PQ, (current_LQ[0].lb, id(current_LQ), current_LQ))
+                    print("LQ, global_PQ ya push ediliyor, son durum")
+                    for _,_,lq in global_PQ:
+                        for p in lq:
+                            print(p)
+                        print()
                 break
             
             if not ExtendPath(path=current_path, graph=graph, graph_state=graph_state, LQ=LQ, global_PQ=global_PQ, covered_vertices=covered_vertices):
                 break
 
         if current_path.tail() == dest:
+            print(f"current path: {current_path}, destinationa ulaştı, adjust path yapıcaz")
             AdjustPath(path=current_path, LQ=LQ, result_set=result_set, dest=dest)
             return current_path
     
     return None
 
-def FindKSPD(graph, graph_reverse, src, dest, k, threshold, node_names):
+def FindKSPD(graph, graph_reverse, src, dest, k, threshold):
     graph_state = GraphState(graph_reverse=graph_reverse, destination=dest)
     result_set = []
     global_PQ = []
@@ -323,9 +352,8 @@ def FindKSPD(graph, graph_reverse, src, dest, k, threshold, node_names):
     covered_vertices = {}  # Track which vertices are covered by which class
 
     shortest_path = dijkstra(graph=graph, src=src, dest=dest)
-    print("shortest path: ")
-    print(shortest_path.route)
     result_set.append(shortest_path)
+    print(f"fisrt shortest path: {shortest_path.route}")
 
     for vertex in shortest_path.route[:-1]:
         # print("----")
@@ -339,13 +367,6 @@ def FindKSPD(graph, graph_reverse, src, dest, k, threshold, node_names):
 
             should_add = False
             # print(f"neighbor: {neighbor}")
-
-            # if not path.contains(neighbor):
-            #     if shortest_path.contains(neighbor):
-            #         if shortest_path.route.index(vertex)+1 != shortest_path.route.index(neighbor):
-            #             path.route.append(neighbor)
-            #             should_add = True
-            #             # print(f"{neighbor} route a eklendi")
 
             if neighbor not in path.route:
                 if neighbor in shortest_path.route:
@@ -375,13 +396,17 @@ def FindKSPD(graph, graph_reverse, src, dest, k, threshold, node_names):
 
                 if LQ[tail]:
                     heapq.heappush(global_PQ, (LQ[tail][0].lb, id(LQ[tail]), LQ[tail]))
-
-    print_state_table(LQ, title='(1) After finding and adjusting P1', node_names)
+                    ## DEBUG
+    
+    for lq in global_PQ:
+        for p in lq:
+            print(p)              
 
     while len(result_set) < k and global_PQ:
         new_path = FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest, covered_vertices)
-
-        print_state_table(LQ, title=f'After inding P{len(result_set)+1}', node_names)
+        
+        print("find next path çıktısı olan path: ")
+        print(new_path)
         
         if new_path and new_path.Sim(threshold=threshold, result_set=result_set):
             result_set.append(new_path)
@@ -419,9 +444,12 @@ if __name__ == "__main__":
     print("=" * 60)
     
     node_names = {1: 'A', 2: 'B', 3: 'C', 4: 'D', 5: 'E', 6: 'F', 7: 'H', 8: 'I'}
-
-    result = FindKSPD(G, GR, src=1, dest=4, k=3, threshold=0.5, node_names)
     
+    number_of_paths_explored = 0
+
+    result = FindKSPD(G, GR, src=1, dest=4, k=3, threshold=0.5)
+
+    print(f"Number of explored paths: {number_of_paths_explored}")    
     
     for i, path in enumerate(result, 1):
         route_str = ' -> '.join(node_names[v] for v in path.route)

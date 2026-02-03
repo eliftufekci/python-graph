@@ -1,0 +1,178 @@
+Finding top-3 shortest paths with diversity...
+Source: A (1), Destination: D (4)
+Threshold (τ): 0.5
+============================================================
+fisrt shortest path: [1, 2, 3, 4]
+25
+138302145544704
+[Route: [1, 2, 6], Length: 11, LB: 25, Class: (1, 2)]
+30
+138302145545984
+[Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)]
+26
+138302145556224
+[Route: [1, 2, 7], Length: 13, LB: 26, Class: (1, 2)]
+32
+138302145551872
+[Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)]
+Find next pathe geldim
+Find Next path başında global_PQ nun durumu
+Route: [1, 2, 6], Length: 11, LB: 25, Class: (1, 2)
+
+Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)
+
+Route: [1, 2, 7], Length: 13, LB: 26, Class: (1, 2)
+
+Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)
+
+LQ nun durumu: 
+{8: [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)], 6: [Route: [1, 2, 6], Length: 11, LB: 25, Class: (1, 2)], 7: [Route: [1, 2, 7], Length: 13, LB: 26, Class: (1, 2)], 5: [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)]}
+Sırayla her iterasyonda current lq içindeki pathler
+Route: [1, 2, 6], Length: 11, LB: 25, Class: (1, 2)
+Find Next Path içinde o an işlenen path: Route: [1, 2, 6], Length: 11, LB: 25, Class: (1, 2)
+tail dest e ulaşana kadar while içindeyiz
+Extend pathe geldim
+işlediğim path Route: [1, 2, 6], Length: 11, LB: 25, Class: (1, 2)
+genişletmemi yaptım path şu hale geldi: Route: [1, 2, 6, 7], Length: 12, LB: 25, Class: (1, 2)
+tail dest e ulaşana kadar while içindeyiz
+Extend pathe geldim
+işlediğim path Route: [1, 2, 6, 7], Length: 12, LB: 25, Class: (1, 2)
+p pathi: Route: [1, 2, 7], Length: 13, LB: 26, Class: (1, 2) ile extend edeceğim path Route: [1, 2, 6, 7], Length: 12, LB: 25, Class: (1, 2) aynı sınıftalar ve extend edilen daha kısa olduğu için p yi inactive yapıyoruz
+eğer neighbor rotada yoksa ve benim parentim değilse uzatıyorum
+LQ ya newpathi push ettim
+{8: [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)], 6: [], 7: [Route: [1, 2, 7], Length: 13, LB: 26, Class: (1, 2)], 5: [Route: [1, 2, 6, 7, 5], Length: 27, LB: 28, Class: (1, 2), Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)]}
+global_PQ nun durumu
+Route: [1, 2, 7], Length: 13, LB: 26, Class: (1, 2)
+
+Route: [1, 2, 6, 7, 5], Length: 27, LB: 28, Class: (1, 2)
+Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)
+
+Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)
+
+genişletmemi yaptım path şu hale geldi: Route: [1, 2, 6, 7, 8], Length: 13, LB: 25, Class: (1, 2)
+tail dest e ulaşana kadar while içindeyiz
+Extend pathe geldim
+işlediğim path Route: [1, 2, 6, 7, 8], Length: 13, LB: 25, Class: (1, 2)
+Cycle var, uzatamadık
+Sırayla her iterasyonda current lq içindeki pathler
+Route: [1, 2, 7], Length: 13, LB: 26, Class: (1, 2)
+Find Next Path içinde o an işlenen path: Route: [1, 2, 7], Length: 13, LB: 26, Class: (1, 2)
+tail dest e ulaşana kadar while içindeyiz
+Extend pathe geldim
+işlediğim path Route: [1, 2, 7], Length: 13, LB: 26, Class: (1, 2)
+eğer neighbor rotada yoksa ve benim parentim değilse uzatıyorum
+eğer neighbor'un class keyi covered vertices içindeyse o yol inactive olmalı
+LQ ya newpathi push ettim
+{8: [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)], 6: [], 7: [], 5: [Route: [1, 2, 6, 7, 5], Length: 27, LB: 28, Class: (1, 2), Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3), Route: [1, 2, 7, 5], Length: 28, LB: 29, Class: (1, 2)]}
+global_PQ nun durumu
+Route: [1, 2, 6, 7, 5], Length: 27, LB: 28, Class: (1, 2)
+Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)
+Route: [1, 2, 7, 5], Length: 28, LB: 29, Class: (1, 2)
+
+Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)
+
+genişletmemi yaptım path şu hale geldi: Route: [1, 2, 7, 8], Length: 14, LB: 26, Class: (1, 2)
+tail dest e ulaşana kadar while içindeyiz
+Extend pathe geldim
+işlediğim path Route: [1, 2, 7, 8], Length: 14, LB: 26, Class: (1, 2)
+Cycle var, uzatamadık
+Sırayla her iterasyonda current lq içindeki pathler
+Route: [1, 2, 6, 7, 5], Length: 27, LB: 28, Class: (1, 2)
+Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)
+Route: [1, 2, 7, 5], Length: 28, LB: 29, Class: (1, 2)
+Find Next Path içinde o an işlenen path: Route: [1, 2, 6, 7, 5], Length: 27, LB: 28, Class: (1, 2)
+o an işlenen path çıkarıldıktan sonra tekrar global_PQ ya push yapılıyor: 
+Route: [1, 2, 7, 5], Length: 28, LB: 29, Class: (1, 2)
+Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)
+
+Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)
+
+tail dest e ulaşana kadar while içindeyiz
+Extend pathe geldim
+işlediğim path Route: [1, 2, 6, 7, 5], Length: 27, LB: 28, Class: (1, 2)
+genişletmemi yaptım path şu hale geldi: Route: [1, 2, 6, 7, 5, 4], Length: 28, LB: 28, Class: (1, 2)
+current path: Route: [1, 2, 6, 7, 5, 4], Length: 28, LB: 28, Class: (1, 2), destinationa ulaştı, adjust path yapıcaz
+Adjust path'e geldim
+LQ'nun durumu
+{8: [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)], 6: [], 7: [], 5: [Route: [1, 2, 7, 5], Length: 28, LB: 29, Class: (1, 2), Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)]}
+Route: [1, 2, 7, 5], Length: 28, LB: 29, Class: (1, 2) pathi domine edilmiş, onu activate yapıyoruz
+Route: [1, 2, 6, 7, 5, 4], Length: 28, LB: 28, Class: (1, 2), destinationa ulaşmış, prefix güncellemesi yapıcaz
+p pathi: Route: [1, 2, 7, 5], Length: 28, LB: 29, Class: (1, 2), bulunan yeni path: Route: [1, 2, 6, 7, 5, 4], Length: 28, LB: 28, Class: (1, 2) ile aynı prefixe sahip
+p pathi: Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3), bulunan yeni path: Route: [1, 2, 6, 7, 5, 4], Length: 28, LB: 28, Class: (1, 2) ile aynı prefixe sahip
+find next path çıktısı olan path: 
+Route: [1, 2, 6, 7, 5, 4], Length: 28, LB: 28, Class: (1, 2)
+Find next pathe geldim
+Find Next path başında global_PQ nun durumu
+Route: [1, 2, 7, 5], Length: 28, LB: 29, Class: (1, 2)
+Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)
+
+Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)
+
+LQ nun durumu: 
+{8: [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)], 6: [], 7: [], 5: [Route: [1, 2, 7, 5], Length: 28, LB: 29, Class: (1, 2), Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)]}
+Sırayla her iterasyonda current lq içindeki pathler
+Route: [1, 2, 7, 5], Length: 28, LB: 29, Class: (1, 2)
+Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)
+Find Next Path içinde o an işlenen path: Route: [1, 2, 7, 5], Length: 28, LB: 29, Class: (1, 2)
+o an işlenen path çıkarıldıktan sonra tekrar global_PQ ya push yapılıyor: 
+Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)
+
+Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)
+
+tail dest e ulaşana kadar while içindeyiz
+lb2 değeri büyük çıktı adjust path yapıcaz
+Adjust path'e geldim
+LQ'nun durumu
+{8: [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)], 6: [], 7: [], 5: [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)]}
+adjust path yaptıktan sonra elimizdeki current path Route: [1, 2, 7, 5], Length: 28, LB: 47.0, Class: (1, 2), bunu current_LQ ya push etmemiz lazım
+LQ, global_PQ ya push ediliyor, son durum
+Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)
+Route: [1, 2, 7, 5], Length: 28, LB: 47.0, Class: (1, 2)
+
+Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)
+
+Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)
+Route: [1, 2, 7, 5], Length: 28, LB: 47.0, Class: (1, 2)
+
+Sırayla her iterasyonda current lq içindeki pathler
+Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)
+Route: [1, 2, 7, 5], Length: 28, LB: 47.0, Class: (1, 2)
+Find Next Path içinde o an işlenen path: Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)
+o an işlenen path çıkarıldıktan sonra tekrar global_PQ ya push yapılıyor: 
+Route: [1, 2, 7, 5], Length: 28, LB: 47.0, Class: (1, 2)
+
+Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)
+
+Route: [1, 2, 7, 5], Length: 28, LB: 47.0, Class: (1, 2)
+
+tail dest e ulaşana kadar while içindeyiz
+Extend pathe geldim
+işlediğim path Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3)
+genişletmemi yaptım path şu hale geldi: Route: [1, 2, 3, 5, 4], Length: 30, LB: 30, Class: (1, 3)
+current path: Route: [1, 2, 3, 5, 4], Length: 30, LB: 30, Class: (1, 3), destinationa ulaştı, adjust path yapıcaz
+Adjust path'e geldim
+LQ'nun durumu
+{8: [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1)], 6: [], 7: [], 5: [Route: [1, 2, 7, 5], Length: 28, LB: 47.0, Class: (1, 2)]}
+Route: [1, 2, 3, 5, 4], Length: 30, LB: 30, Class: (1, 3), destinationa ulaşmış, prefix güncellemesi yapıcaz
+p pathi: Route: [1, 2, 7, 5], Length: 28, LB: 47.0, Class: (1, 2), bulunan yeni path: Route: [1, 2, 3, 5, 4], Length: 30, LB: 30, Class: (1, 3) ile aynı prefixe sahip
+find next path çıktısı olan path: 
+Route: [1, 2, 3, 5, 4], Length: 30, LB: 30, Class: (1, 3)
+Number of explored paths: 5
+
+Path 1:
+  Route: A -> B -> C -> D
+  Length: 21
+
+Path 2:
+  Route: A -> B -> F -> H -> E -> D
+  Length: 28
+  Similarity with Path 1: 0.26
+
+Path 3:
+  Route: A -> B -> C -> E -> D
+  Length: 30
+  Similarity with Path 1: 0.28
+  Similarity with Path 2: 0.23
+
+============================================================
+Total paths found: 3
