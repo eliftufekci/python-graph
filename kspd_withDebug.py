@@ -45,7 +45,7 @@ class Path:
         return str(self)
 
     def __lt__(self, other):
-        return self.lb < other.lb 
+        return (not self.isActive, self.lb) < (not other.isActive, other.lb) 
     
     def tail(self):
         return self.route[-1] if self.route else None
@@ -217,14 +217,11 @@ def ExtendPath(path, graph, graph_state, LQ, global_PQ, covered_vertices):
             print("global_PQ nun durumu")
             print_global(global_PQ)
 
-            # burada LQ da yaptığım değişiklik zaten global olanda görünüyor, tekrar pushlamam aynı şeyi 2 defa pushlamam anlamına geliyor
+            # # burada LQ da yaptığım değişiklik zaten global olanda görünüyor, tekrar pushlamam aynı şeyi 2 defa pushlamam anlamına geliyor
             # if LQ[neighbor]:
-            #     heapq.heappush(global_PQ, (LQ[neighbor][0].lb, id(LQ[neighbor]), LQ[neighbor]))
+            #     heapq.heappush(global_PQ, ((not LQ[neighbor][0].isActive, LQ[neighbor][0].lb), id(LQ[neighbor]), LQ[neighbor]))
             #     print("global_PQ nun push sonrası durumu")
-            #     for _,_,lq in global_PQ:
-            #         for p in lq:
-            #             print(p)
-            #         print()
+            #     print_global(global_PQ)
 
     parent = graph_state.parent.get(tail)
     if parent is None:
@@ -304,20 +301,27 @@ def FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest,
         if not current_LQ:
             continue
         
-        current_path = heapq.heappop(current_LQ)
+        current_path = current_LQ[0]            
         number_of_paths_explored += 1
 
         print(f"Find Next Path içinde o an işlenen path: {current_path}")
 
-        if current_LQ:
-            heapq.heappush(global_PQ, (current_LQ[0].lb, id(current_LQ), current_LQ))
-            print("o an işlenen path çıkarıldıktan sonra tekrar global_PQ ya push yapılıyor: ")
-            print_global(global_PQ)
-
         if not current_path.isActive:
             print("path inactive olduğu için geçiyoruz")
-            heapq.heappush(current_LQ, current_path)
+            print( "local queue hali:")
+            print_local(current_LQ)
+            heapq.heappush(global_PQ, ((not current_LQ[0].isActive, current_LQ[0].lb), id(current_LQ), current_LQ))
+            print("global queue hali:")
+            print_global(global_PQ)
             continue
+        
+        current_path = heapq.heappop(current_LQ)          
+
+        if current_LQ:
+            heapq.heappush(global_PQ, ((not current_LQ[0].isActive, current_LQ[0].lb), id(current_LQ), current_LQ))
+            print("o an işlenen path çıkarıldıktan sonra local queue'da hala eleman varsa local queue'nun sonr halini tekrar global_PQ ya push ediyoruz: ")
+            print_global(global_PQ)
+            
         
         while current_path.tail() != dest:
             print("tail dest e ulaşana kadar while içindeyiz")
@@ -331,7 +335,7 @@ def FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest,
                 print(f"adjust path yaptıktan sonra elimizdeki current path {current_path}, bunu current_LQ ya push etmemiz lazım")
                 heapq.heappush(current_LQ, current_path)
                 if current_LQ:
-                    heapq.heappush(global_PQ, (current_LQ[0].lb, id(current_LQ), current_LQ))
+                    heapq.heappush(global_PQ, ((not current_LQ[0].isActive, current_LQ[0].lb), id(current_LQ), current_LQ))
                     print_global(global_PQ)
                 break
 
@@ -396,7 +400,7 @@ def FindKSPD(graph, graph_reverse, src, dest, k, threshold):
                 heapq.heappush(LQ[tail], path)
 
                 if LQ[tail]:
-                    heapq.heappush(global_PQ, (LQ[tail][0].lb, id(LQ[tail]), LQ[tail]))
+                    heapq.heappush(global_PQ, ((not LQ[tail][0].isActive, LQ[tail][0].lb), id(LQ[tail]), LQ[tail]))
     
     print("find kspd nin ilk kısmının sonunda global pq durumu")
     print_global(global_PQ)            
