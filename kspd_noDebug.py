@@ -12,6 +12,45 @@ def print_local(pq):
     while c:
         print(heapq.heappop(c))
 
+class TreeNode:
+    def __init__(self):
+        self.children = {} 
+        self.isLeaf = False
+        self.paths_here =  []
+
+class PrefixTree:
+    def __init__(self):
+        self.root = TreeNode()
+
+    def insert(self, route):
+        current = self.root
+
+        for v in route:
+            if v not in current.children:
+                current.children[v] = TreeNode()
+            current = current.children[v]
+        current.isLeaf = True
+        current.paths_here.append(route)
+
+    def CollectAllPaths(self, node, path_list):
+        path_list.extend(node.paths_here)
+
+        for child in node.children.values():
+            self.CollectAllPaths(child, path_list)
+
+    def findPathsWithPrefix(self, prefix):
+        current = self.root
+
+        for v in prefix:
+            if v not in current.children:
+                return []
+            current = current.children[v] 
+        
+        paths = []
+        self.CollectAllPaths(current, paths)
+        return paths
+
+
 class GraphState:
     def __init__(self, graph_reverse, destination):
         self.graph_reverse = graph_reverse
@@ -20,12 +59,12 @@ class GraphState:
         self.isSettled = {}
         self.parent = {}
         self.PQ = []
-        
+
         for node in graph_reverse.nodes():
             self.distances[node] = float('inf')
             self.isSettled[node] = False
             self.parent[node] = None
-        
+
         heapq.heappush(self.PQ, (0, destination))
         self.distances[destination] = 0
 
@@ -40,19 +79,19 @@ class Path:
 
     def __str__(self):
         return f"Route: {self.route}, Length: {self.length}, LB: {self.lb}, Class: {self.cls}, isActive: {self.isActive}"
-    
+
     def __repr__(self):
         return str(self)
 
     def __lt__(self, other):
-        return (not self.isActive, self.lb) < (not other.isActive, other.lb) 
-    
+        return (not self.isActive, self.lb) < (not other.isActive, other.lb)
+
     def tail(self):
         return self.route[-1] if self.route else None
 
     def head(self):
         return self.route[0] if self.route else None
-    
+
     def copy(self):
         new_path = Path()
         new_path.route = self.route.copy()
@@ -62,21 +101,21 @@ class Path:
         new_path.cls = self.cls
         new_path.isActive = self.isActive
         return new_path
-        
+
     def LB1(self, graph_state):
         tail = self.tail()
         if tail is None:
             return 0
 
         if not graph_state.isSettled[tail]:
-            ConstructPartialSPT(graph_state=graph_state, v=tail) 
+            ConstructPartialSPT(graph_state=graph_state, v=tail)
 
         return self.length + graph_state.distances[tail]
 
     def LB2(self, threshold, result_set):
         # return 0
         if not result_set:
-            return 0 
+            return 0
 
         lb2 = 0
         for old_path in result_set:
@@ -88,13 +127,13 @@ class Path:
 
         return lb2
 
-    
+
     def Sim(self, threshold, result_set):
         for old_path in result_set:
             common_edges = set(old_path.edges.keys()).intersection(set(self.edges.keys()))
             intersection_length = sum(old_path.edges[e] for e in common_edges)
             union_length = self.length + old_path.length - intersection_length
-            
+
             if union_length > 0:
                 similarity = intersection_length / union_length
                 if similarity > threshold:
@@ -175,11 +214,11 @@ def dijkstra(graph, src, dest):
 
     return None
 
-def ExtendPath(path, graph, graph_state, LQ, global_PQ, covered_vertices):
+def ExtendPath(path, graph, graph_state, LQ, global_PQ, covered_vertices, prefix_tree):
     print("="*60)
     print("ExtendPath Method")
     print(f"\nPath to be extended {path}")
-    
+
     tail = path.tail()
 
     if tail in LQ:
@@ -210,6 +249,7 @@ def ExtendPath(path, graph, graph_state, LQ, global_PQ, covered_vertices):
             if neighbor not in LQ:
                 LQ[neighbor] = []
             heapq.heappush(LQ[neighbor], new_path)
+            prefix_tree.insert(new_path.route)
 
             # for x in LQ.values():
             #     print_local(x)
@@ -238,11 +278,11 @@ def ExtendPath(path, graph, graph_state, LQ, global_PQ, covered_vertices):
 
     return True
 
-def AdjustPath(path, global_PQ, LQ, result_set, dest):
+def AdjustPath(path, global_PQ, LQ, result_set, dest, prefix_tree):
     print("="*60)
     print("AdjustPath Method")
     print(f"Path to be adjusted: {path}")
-    
+
     # for x in LQ.keys():
     #     print_local(LQ[x])
 
@@ -266,18 +306,16 @@ def AdjustPath(path, global_PQ, LQ, result_set, dest):
         print(f"Path {path} reached the destination")
         path_id = len(result_set) + 1
 
-        for lq in LQ.values():
-            for p in lq:
-                for vertex in path.route:
-                    try:
-                        path_index = path.route.index(vertex)
-                        p_index = p.route.index(vertex)
-                        if p.route[:p_index + 1] == path.route[:path_index + 1] and len(p.route[:p_index + 1])>1:
-                            print(f"Path: {p}, has the same prefix with path: {path}, prefix: {p.route[:p_index + 1]}")
-                            print(f"Update class: {(path_id, vertex)}")
-                            p.cls = (path_id, vertex)
-                    except ValueError:
-                        continue
+        for i, vertex in enumerate(path.route):
+            prefix = path.route[:i+1]
+            
+            paths_with_prefix = prefix_tree.findPathsWithPrefix(prefix)
+
+            for p in paths_with_prefix:
+                if len(p) > len(prefix):
+                    print(f"Path: {p}, has the same prefix with path: {path}, prefix: {prefix}")
+                    print(f"Update class: {(path_id, vertex)}")
+                    p.cls = (path_id, vertex)
 
     if updated:
         for i in range(len(global_PQ)):
@@ -288,7 +326,7 @@ def AdjustPath(path, global_PQ, LQ, result_set, dest):
                 if first_active:
                     new_key = (not first_active.isActive, first_active.lb)
                     global_PQ[i] = (new_key, global_PQ[i][1], temp_queue)
-        
+
         heapq.heapify(global_PQ)
 
     print("The global and local priority queues after AdjustPath method")
@@ -296,9 +334,9 @@ def AdjustPath(path, global_PQ, LQ, result_set, dest):
     print("-"*30)
     for x in LQ.values():
         print_local(x)
-    
 
-def FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest, covered_vertices):
+
+def FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest, covered_vertices, prefix_tree):
     global number_of_paths_explored
 
     print("="*60)
@@ -309,55 +347,58 @@ def FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest,
     print("-"*30)
     for x in LQ.values():
         print_local(x)
-    
+
 
     while global_PQ:
         _, _, current_LQ = heapq.heappop(global_PQ)
 
         if not current_LQ:
             continue
-        
-        current_path = current_LQ[0]            
+
+        current_path = current_LQ[0]
         number_of_paths_explored += 1
 
         if not current_path.isActive:
             heapq.heappush(global_PQ, ((not current_LQ[0].isActive, current_LQ[0].lb), id(current_LQ), current_LQ))
             continue
-        
-        current_path = heapq.heappop(current_LQ)    
+
+        current_path = heapq.heappop(current_LQ)
 
         print(f"Path to be processed: {current_path}")
-      
+
         if current_LQ:
             heapq.heappush(global_PQ, ((not current_LQ[0].isActive, current_LQ[0].lb), id(current_LQ), current_LQ))
-        
+
         while current_path.tail() != dest:
             print("Processing until tail reaches destination")
 
             LB2 = current_path.LB2(threshold=threshold, result_set=result_set)
-            
+
             if LB2 > current_path.lb:
                 current_path.lb = LB2
-                AdjustPath(path=current_path, global_PQ=global_PQ, LQ=LQ, result_set=result_set, dest=dest)
-                print(f"LB2 is larger, after adjusting: {current_path}")
+                AdjustPath(path=current_path, global_PQ=global_PQ, LQ=LQ, result_set=result_set, dest=dest, prefix_tree=prefix_tree)
+                print(f"We adjusted path: {current_path}, because of LB2 is larger")
                 heapq.heappush(current_LQ, current_path)
                 break
 
-            if not ExtendPath(path=current_path, graph=graph, graph_state=graph_state, LQ=LQ, global_PQ=global_PQ, covered_vertices=covered_vertices):
+            if not ExtendPath(path=current_path, graph=graph, graph_state=graph_state, LQ=LQ, global_PQ=global_PQ, covered_vertices=covered_vertices, prefix_tree=prefix_tree):
                 break
 
         if current_path.tail() == dest:
+            if current_path.cls in covered_vertices:
+                covered_vertices[current_path.cls].clear()
+
             print(f"Path: {current_path}, reached destination")
-            AdjustPath(path=current_path, global_PQ=global_PQ, LQ=LQ, result_set=result_set, dest=dest)
+            AdjustPath(path=current_path, global_PQ=global_PQ, LQ=LQ, result_set=result_set, dest=dest, prefix_tree=prefix_tree)
 
             print("The global and local priority queues after FindNextPath method")
             print_global(global_PQ)
             print("-"*30)
             for x in LQ.values():
                 print_local(x)
-            
+
             return current_path
-    
+
     return None
 
 def FindKSPD(graph, graph_reverse, src, dest, k, threshold):
@@ -365,10 +406,12 @@ def FindKSPD(graph, graph_reverse, src, dest, k, threshold):
     result_set = []
     global_PQ = []
     LQ = {}
-    covered_vertices = {}  # Track which vertices are covered by which class
+    covered_vertices = {}
+    prefix_tree = PrefixTree()
 
     shortest_path = dijkstra(graph=graph, src=src, dest=dest)
     result_set.append(shortest_path)
+    prefix_tree.insert(shortest_path.route)
     print(f"First shortest path found by dijsktra: {shortest_path.route}")
 
     for vertex in shortest_path.route[:-1]:
@@ -401,18 +444,19 @@ def FindKSPD(graph, graph_reverse, src, dest, k, threshold):
                 if tail not in LQ:
                     LQ[tail] = []
                 heapq.heappush(LQ[tail], path)
+                prefix_tree.insert(path.route)
 
-                if LQ[tail]:
+                if LQ[tail] and LQ[tail] not in global_PQ:
                     heapq.heappush(global_PQ, ((not LQ[tail][0].isActive, LQ[tail][0].lb), id(LQ[tail]), LQ[tail]))
-    
+
     print("Global priority queue filled with first path's deviation points")
 
     while len(result_set) < k and global_PQ:
-        new_path = FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest, covered_vertices)
-        
+        new_path = FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest, covered_vertices, prefix_tree=prefix_tree)
+
         print("The new candidate path found by FindNextPath Method: ")
         print(new_path)
-        
+
         if new_path and new_path.Sim(threshold=threshold, result_set=result_set):
             result_set.append(new_path)
 
@@ -434,32 +478,32 @@ if __name__ == "__main__":
         (3, 5, 18),   # C -> E
         (5, 4, 1)     # E -> D
     ]
-    
+
     # Node mapping: A=1, B=2, C=3, D=4, E=5, F=6, H=7, I=8
     G.add_weighted_edges_from(edges)
-    
+
     GR = reverse(G)
-    
+
     print("Finding top-3 shortest paths with diversity...")
     print("Source: A (1), Destination: D (4)")
     print("Threshold (τ): 0.5")
     print("=" * 60)
-    
+
     node_names = {1: 'A', 2: 'B', 3: 'C', 4: 'D', 5: 'E', 6: 'F', 7: 'H', 8: 'I'}
-    
+
     number_of_paths_explored = 0
 
-    result = FindKSPD(G, GR, src=1, dest=4, k=3, threshold=0.5)    
+    result = FindKSPD(G, GR, src=1, dest=4, k=3, threshold=0.5)
     # result = FindKSPD(G, GR, src=1, dest=4, k=3, threshold=1)
 
 
-    
+
     for i, path in enumerate(result, 1):
         route_str = ' -> '.join(node_names[v] for v in path.route)
         print(f"\nPath {i}:")
         print(f"  Route: {route_str}")
         print(f"  Length: {path.length}")
-        
+
         # Calculate similarity with other paths
         if i > 1:
             for j in range(i - 1):
@@ -469,8 +513,8 @@ if __name__ == "__main__":
                 union_len = path.length + old_path.length - inter_len
                 sim = inter_len / union_len if union_len > 0 else 0
                 print(f"  Similarity with Path {j+1}: {sim:.2f}")
-    
+
     print("\n" + "=" * 60)
 
     print(f"Total paths found: {len(result)}")
-    print(f"Number of explored paths: {number_of_paths_explored}")    
+    print(f"Number of explored paths: {number_of_paths_explored}")
