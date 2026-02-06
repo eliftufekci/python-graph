@@ -8,10 +8,10 @@ Global priority queue filled with first path's deviation points
 FindNextPath Method
 
 The global and local priority queues before FindNextPath method
-((False, 25), 136061896208320, [Route: [1, 2, 6], Length: 11, LB: 25, Class: (1, 2), isActive: True])
-((False, 26), 136061896211904, [Route: [1, 2, 7], Length: 13, LB: 26, Class: (1, 2), isActive: True])
-((False, 30), 136061896205696, [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3), isActive: True])
-((False, 32), 136061896211712, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
+((False, 25), 136061896065088, [Route: [1, 2, 6], Length: 11, LB: 25, Class: (1, 2), isActive: True])
+((False, 26), 136061900599552, [Route: [1, 2, 7], Length: 13, LB: 26, Class: (1, 2), isActive: True])
+((False, 30), 136061900600576, [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3), isActive: True])
+((False, 32), 136061896067136, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
 ------------------------------
 Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True
 Route: [1, 2, 6], Length: 11, LB: 25, Class: (1, 2), isActive: True
@@ -56,17 +56,17 @@ Update class: (2, 2)
 Path: Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (1, 3), isActive: True, has the same prefix with path: Route: [1, 2, 6, 7, 5, 4], Length: 28, LB: 28, Class: (1, 2), isActive: True, prefix: [1, 2]
 Update class: (2, 2)
 The global and local priority queues after AdjustPath method
-((False, 26), 136061896211904, [Route: [1, 2, 7], Length: 13, LB: 26, Class: (2, 2), isActive: True])
-((False, 30), 136061896205696, [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (2, 2), isActive: True])
-((False, 32), 136061896211712, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
+((False, 26), 136061900599552, [Route: [1, 2, 7], Length: 13, LB: 26, Class: (2, 2), isActive: True])
+((False, 30), 136061900600576, [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (2, 2), isActive: True])
+((False, 32), 136061896067136, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
 ------------------------------
 Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True
 Route: [1, 2, 7], Length: 13, LB: 26, Class: (2, 2), isActive: True
 Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (2, 2), isActive: True
 The global and local priority queues after FindNextPath method
-((False, 26), 136061896211904, [Route: [1, 2, 7], Length: 13, LB: 26, Class: (2, 2), isActive: True])
-((False, 30), 136061896205696, [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (2, 2), isActive: True])
-((False, 32), 136061896211712, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
+((False, 26), 136061900599552, [Route: [1, 2, 7], Length: 13, LB: 26, Class: (2, 2), isActive: True])
+((False, 30), 136061900600576, [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (2, 2), isActive: True])
+((False, 32), 136061896067136, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
 ------------------------------
 Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True
 Route: [1, 2, 7], Length: 13, LB: 26, Class: (2, 2), isActive: True
@@ -77,9 +77,9 @@ Route: [1, 2, 6, 7, 5, 4], Length: 28, LB: 28, Class: (1, 2), isActive: True
 FindNextPath Method
 
 The global and local priority queues before FindNextPath method
-((False, 26), 136061896211904, [Route: [1, 2, 7], Length: 13, LB: 26, Class: (2, 2), isActive: True])
-((False, 30), 136061896205696, [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (2, 2), isActive: True])
-((False, 32), 136061896211712, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
+((False, 26), 136061900599552, [Route: [1, 2, 7], Length: 13, LB: 26, Class: (2, 2), isActive: True])
+((False, 30), 136061900600576, [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (2, 2), isActive: True])
+((False, 32), 136061896067136, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
 ------------------------------
 Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True
 Route: [1, 2, 7], Length: 13, LB: 26, Class: (2, 2), isActive: True
@@ -115,14 +115,14 @@ Path Route: [1, 2, 7, 5, 4], Length: 29, LB: 29, Class: (2, 2), isActive: True r
 Path: Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (2, 2), isActive: True, has the same prefix with path: Route: [1, 2, 7, 5, 4], Length: 29, LB: 29, Class: (2, 2), isActive: True, prefix: [1, 2]
 Update class: (3, 2)
 The global and local priority queues after AdjustPath method
-((False, 30), 136061896205696, [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (3, 2), isActive: True])
-((False, 32), 136061896211712, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
+((False, 30), 136061900600576, [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (3, 2), isActive: True])
+((False, 32), 136061896067136, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
 ------------------------------
 Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True
 Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (3, 2), isActive: True
 The global and local priority queues after FindNextPath method
-((False, 30), 136061896205696, [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (3, 2), isActive: True])
-((False, 32), 136061896211712, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
+((False, 30), 136061900600576, [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (3, 2), isActive: True])
+((False, 32), 136061896067136, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
 ------------------------------
 Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True
 Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (3, 2), isActive: True
@@ -132,8 +132,8 @@ Route: [1, 2, 7, 5, 4], Length: 29, LB: 29, Class: (2, 2), isActive: True
 FindNextPath Method
 
 The global and local priority queues before FindNextPath method
-((False, 30), 136061896205696, [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (3, 2), isActive: True])
-((False, 32), 136061896211712, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
+((False, 30), 136061900600576, [Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (3, 2), isActive: True])
+((False, 32), 136061896067136, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
 ------------------------------
 Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True
 Route: [1, 2, 3, 5], Length: 29, LB: 30, Class: (3, 2), isActive: True
@@ -150,11 +150,11 @@ AdjustPath Method
 Path to be adjusted: Route: [1, 2, 3, 5, 4], Length: 30, LB: 30, Class: (3, 2), isActive: True
 Path Route: [1, 2, 3, 5, 4], Length: 30, LB: 30, Class: (3, 2), isActive: True reached the destination
 The global and local priority queues after AdjustPath method
-((False, 32), 136061896211712, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
+((False, 32), 136061896067136, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
 ------------------------------
 Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True
 The global and local priority queues after FindNextPath method
-((False, 32), 136061896211712, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
+((False, 32), 136061896067136, [Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True])
 ------------------------------
 Route: [1, 8], Length: 20, LB: 32, Class: (1, 1), isActive: True
 The new candidate path found by FindNextPath Method: 

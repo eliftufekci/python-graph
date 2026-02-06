@@ -87,7 +87,7 @@ class Path:
         new_path.lb = self.lb
         new_path.cls = self.cls
         new_path.isActive = self.isActive
-        new_path.cached_intersections = self.cached_intersections
+        new_path.cached_intersections = self.cached_intersections.copy()
         return new_path
 
     def LB1(self, graph_state):
