@@ -351,14 +351,21 @@ def FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest,
         if not current_LQ:
             continue
 
-        current_path = current_LQ[0]
-        number_of_paths_explored += 1
-
-        if not current_path.isActive:
-            heapq.heappush(global_PQ, ((not current_LQ[0].isActive, current_LQ[0].lb), id(current_LQ), current_LQ))
-            continue
-
         current_path = heapq.heappop(current_LQ)
+
+        number_of_paths_explored += 1
+        inactive_paths = [] 
+
+        while not current_path.isActive:
+            if not current_LQ:
+                inactive_paths.append(current_path)
+                break
+                continue
+            else:
+                inactive_paths.append(current_path)
+                current_path = heapq.heappop(current_LQ)
+
+
 
         # current_path = None
         # path_index = -1
@@ -417,6 +424,10 @@ def FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest,
             print("-"*30)
             for x in LQ.values():
                 print_local(x)
+
+            for path in inactive_paths:
+                heapq.heappush(current_LQ, path)
+            heapq.heappush(global_PQ, ((not current_LQ[0].isActive, current_LQ[0].lb), id(current_LQ), current_LQ))
 
             return current_path
 
