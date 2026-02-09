@@ -1,0 +1,77 @@
+749440 437180
+Finding top-10 shortest paths with diversity...
+Threshold (τ): 0.6
+============================================================
+first shortest path found
+New path found
+New path found
+New path found
+Path added to result set
+New path found
+Path added to result set
+New path found
+New path found
+New path found
+New path found
+New path found
+New path found
+New path found
+Path added to result set
+New path found
+New path found
+Path added to result set
+New path found
+New path found
+Path added to result set
+New path found
+New path found
+New path found
+New path found
+New path found
+Path added to result set
+New path found
+New path found
+New path found
+New path found
+Path added to result set
+New path found
+New path found
+Path added to result set
+New path found
+Path added to result set
+
+Path 1:
+  Length: 10
+
+Path 2:
+  Length: 10
+
+Path 3:
+  Length: 10
+
+Path 4:
+  Length: 11
+
+Path 5:
+  Length: 11
+
+Path 6:
+  Length: 11
+
+Path 7:
+  Length: 11
+
+Path 8:
+  Length: 11
+
+Path 9:
+  Length: 11
+
+Path 10:
+  Length: 11
+
+============================================================
+Total paths found: 10
+Number of explored paths: 28
+Average Hop Count: 10.7
+Execution time: 0:00:12.565562

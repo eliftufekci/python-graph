@@ -3,6 +3,7 @@ import random
 import networkx as nx
 import heapq
 import numpy as np
+import datetime
 
 class PrefixMap:
     def __init__(self):
@@ -346,6 +347,12 @@ def FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest,
 
     return None
 
+def average_hop_count(result):
+    if not result:
+        return 0
+
+    return sum(len(p.route)-1 for p in result) / len(result)
+
 def FindKSPD(graph, graph_reverse, src, dest, k, threshold):
     graph_state = GraphState(graph_reverse=graph_reverse, destination=dest)
     result_set = []
@@ -356,6 +363,11 @@ def FindKSPD(graph, graph_reverse, src, dest, k, threshold):
     global_LQ_ids = set()
 
     shortest_path = dijkstra(graph=graph, src=src, dest=dest)
+
+    if shortest_path is None:
+        print(f"No path exist between {src} and {dest}")
+        return []
+
     result_set.append(shortest_path)
     print("first shortest path found")
 
@@ -402,6 +414,7 @@ def FindKSPD(graph, graph_reverse, src, dest, k, threshold):
 
         if new_path and new_path.Sim(threshold=threshold, result_set=result_set):
             result_set.append(new_path)
+            print("Path added to result set")
 
     return result_set
 
@@ -442,33 +455,55 @@ def visualize_paths_only(G, result_paths, node_names=None):
     plt.savefig('paths_only.png', dpi=300, bbox_inches='tight')
     plt.show()
 
-data = np.genfromtxt('/content/sample_data/web-Google.txt', usecols=(1,2))
-np.savetxt('cleaned-web-Google.txt', data, fmt='%d')
-G = nx.read_unweighted_edgelist('/content/sample_data/cleaned-web-Google.txt', create_using=nx.DiGraph(), nodetype=int)
 
-src = random.choice(list(G.nodes()))
-dest = random.choice(list(G.nodes()))
-print(src,dest)
+if __name__ == "__main__":
+    G = nx.DiGraph()
 
+    with open("/content/sample_data/web-Google.txt") as f:
+        for line in f:
+            u,v = map(int, line.split())
+            G.add_edge(u,v,weight=1)
 
-GR = reverse(G)
+    src = random.choice(list(G.nodes()))
+    reachable = nx.descendants(G, src)
+    
+    while not reachable:
+        src = random.choice(list(G.nodes()))
+        reachable = nx.descendants(G, src)
 
-print("Finding top-3 shortest paths with diversity...")
-print("Threshold (τ): 0.5")
-print("=" * 60)
-
-number_of_paths_explored = 0
-
-result = FindKSPD(G, GR, src=src, dest=dest, k=3, threshold=0.5)
-
-for i, path in enumerate(result, 1):
-    print(f"\nPath {i}:")
-    print(f"  Length: {path.length}")
+    dest = random.choice(list(reachable))
+    print(src,dest)
 
 
-print("\n" + "=" * 60)
+    GR = reverse(G)
 
-print(f"Total paths found: {len(result)}")
-print(f"Number of explored paths: {number_of_paths_explored}")
+    print("Finding top-3 shortest paths with diversity...")
+    print("Threshold (τ): 0.5")
+    print("=" * 60)
 
-visualize_paths_only(G, result)
+    number_of_paths_explored = 0
+
+    start_time = datetime.datetime.now()
+
+    result = FindKSPD(G, GR, src=src, dest=dest, k=10, threshold=0.6)
+
+    end_time = datetime.datetime.now()
+    execution_time = end_time-start_time
+
+
+    for i, path in enumerate(result, 1):
+        print(f"\nPath {i}:")
+        print(f"  Length: {path.length}")
+
+
+    print("\n" + "=" * 60)
+
+    print(f"Total paths found: {len(result)}")
+    print(f"Number of explored paths: {number_of_paths_explored}")
+
+    average_hop_count = average_hop_count(result)
+    print(f"Average Hop Count: {average_hop_count}")
+
+    print(f"Execution time: {execution_time}")
+
+    # visualize_paths_only(G, result)
