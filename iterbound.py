@@ -669,11 +669,11 @@ def FindKSPD(graph, graph_reverse, src, dest, k, threshold):
     shortest_path = dijkstra(graph=graph, src=src, dest=dest)
 
     if shortest_path is None:
-        print(f"No path exist between {src} and {dest}")
+        # print(f"No path exist between {src} and {dest}")
         return []
 
     result_set.append(shortest_path)
-    print("first shortest path found")
+    # print("first shortest path found")
 
     for vertex in shortest_path.route[:-1]:
         for neighbor in graph[vertex]:
@@ -714,11 +714,11 @@ def FindKSPD(graph, graph_reverse, src, dest, k, threshold):
 
     while len(result_set) < k and global_PQ:
         new_path = FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest, covered_vertices, prefix_map=prefix_map)
-        print("New path found")
+        # print("New path found")
 
         if new_path and new_path.Sim(threshold=threshold, result_set=result_set):
             result_set.append(new_path)
-            print("Path added to result set")
+            # print("Path added to result set")
 
     return result_set
 
@@ -772,7 +772,7 @@ if __name__ == "__main__":
     GR = reverse(G)
     node_pairs = []
 
-    for i in range(0,100):
+    for i in range(0,5):
         src = random.choice(list(G.nodes()))
         reachable = nx.descendants(G, src)
         
@@ -801,19 +801,24 @@ if __name__ == "__main__":
 
         iter_bound_times.append(execution_time_iterbound)
         iter_bound_num_paths.append(number_of_paths_explored)
+
+        iter_bound_hop_count = average_hop_count(result_iterbound)
         
         """------------------KSP------------------"""
         
         number_of_paths_explored = 0
         start_time = datetime.datetime.now()
         
-        result_kspd = FindKSPD(G, GR, src=src, dest=dest, k=30, threshold=1)
+        result_ksp = FindKSPD(G, GR, src=src, dest=dest, k=30, threshold=1)
         
         end_time = datetime.datetime.now()
         execution_time_kspd = end_time - start_time
         
         ksp_times.append(execution_time_kspd)
         ksp_num_paths.append(number_of_paths_explored)
+
+        ksp_hop_count = average_hop_count(result_ksp)
+
 
     
     iter_bound_avg_time = np.average(iter_bound_times)
@@ -827,6 +832,9 @@ if __name__ == "__main__":
 
     print(f"KSP average Times: {ksp_avg_time}")
     print(f"KSP average number of paths: {ksp_avg_num_paths}")
+
+    print(f"ksp hop count: {np.average(ksp_hop_count)}")
+    print(f"iterbound hop count: {np.average(iter_bound_hop_count)}")
 
 
 graph_types = ("web-google")
