@@ -84,7 +84,7 @@ class Path:
         return new_path
 
     def LB1(self, graph_state):
-        """Lower bound using Partial SPT (CompLB in IterBound)"""
+        """Lower bound using Partial SPT (CompLB in kspd_minus)"""
         tail = self.tail()
         if tail is None:
             return 0
@@ -125,33 +125,6 @@ class Path:
                 if similarity > threshold:
                     return False
         return True
-
-class Subspace:
-    """
-    IterBound için alt-uzay tanımı
-    S = <P_{s,u}, X_u>
-    - P_{s,u}: s'den u'ya giden yol (prefix)
-    - X_u: u düğümünden çıkan yasaklı kenarlar
-    """
-    def __init__(self, path_prefix=None, excluded_edges=None):
-        self.path_prefix = path_prefix if path_prefix else Path()
-        self.excluded_edges = excluded_edges if excluded_edges else set()
-        self.computed_path = None  # En kısa yol hesaplanmışsa
-        
-    def __lt__(self, other):
-        """Priority queue için karşılaştırma"""
-        # Eğer path hesaplanmışsa, gerçek uzunluğu kullan
-        if self.computed_path:
-            my_key = self.computed_path.length
-        else:
-            my_key = self.path_prefix.lb
-            
-        if other.computed_path:
-            other_key = other.computed_path.length
-        else:
-            other_key = other.path_prefix.lb
-            
-        return my_key < other_key
 
 def ConstructPartialSPT(graph_state, v):
     """
@@ -231,317 +204,6 @@ def dijkstra(graph, src, dest):
                 heapq.heappush(heap, (new_cost, neighbor, path_list + [node]))
 
     return None
-
-def ComputeLowerBound(subspace, graph, graph_state):
-    """
-    CompLB: Alt-uzay için alt sınır hesapla
-    
-    IterBound'daki CompLB algoritması (Algorithm 3)
-    """
-    u = subspace.path_prefix.tail()
-    if u is None:
-        return float('inf')
-    
-    lb = float('inf')
-    has_valid_neighbor = False
-    
-    # u'nun her geçerli komşusu için
-    for neighbor in graph[u]:
-        # Geçerli kenar mı kontrol et
-        if neighbor in subspace.path_prefix.route:  # Döngü oluşturur
-            continue
-        if (u, neighbor) in subspace.excluded_edges:  # Yasaklı
-            continue
-        
-        has_valid_neighbor = True
-            
-        # neighbor'dan hedefe olan mesafeyi SPT'den al
-        if not graph_state.isSettled[neighbor]:
-            ConstructPartialSPT(graph_state=graph_state, v=neighbor)
-        
-        # Eğer neighbor'dan hedefe yol yoksa, skip
-        if graph_state.distances[neighbor] == float('inf'):
-            continue
-        
-        # Tahmin: prefix uzunluğu + edge weight + SPT distance
-        edge_weight = graph[u][neighbor]['weight']
-        estimate = subspace.path_prefix.length + edge_weight + graph_state.distances[neighbor]
-        lb = min(lb, estimate)
-    
-    # Eğer hiç geçerli komşu yoksa veya hepsi infinity ise
-    if not has_valid_neighbor or lb == float('inf'):
-        return float('inf')
-    
-    return lb
-
-
-def TestLowerBound(subspace, graph, graph_state, tau, dest):
-    """
-    TestLB: Alt-uzayda en kısa yol tau'dan büyük mü test et
-    
-    IterBound'daki TestLB algoritması (Algorithm 5)
-    Eğer shortest path <= tau ise yolu döndür, değilse None
-    """
-    global number_of_paths_explored
-    
-    u = subspace.path_prefix.tail()
-    prefix_route = subspace.path_prefix.route
-    prefix_length = subspace.path_prefix.length
-    
-    # A* benzeri arama - sadece estimated distance <= tau olanları genişlet
-    distances = {u: prefix_length}
-    parent = {}
-    
-    # Prefix'teki parent ilişkilerini kopyala
-    for i in range(len(prefix_route) - 1):
-        parent[prefix_route[i+1]] = prefix_route[i]
-    
-    # Priority queue: (estimated_distance, actual_distance, node)
-    pq = []
-    
-    # u'dan hedefe tahmini mesafe
-    if not graph_state.isSettled[u]:
-        ConstructPartialSPT(graph_state=graph_state, v=u)
-    estimated = prefix_length + graph_state.distances[u]
-    
-    heapq.heappush(pq, (estimated, prefix_length, u))
-    visited = set()
-    
-    while pq:
-        est_dist, actual_dist, node = heapq.heappop(pq)
-        
-        if node in visited:
-            continue
-        visited.add(node)
-        number_of_paths_explored += 1
-        
-        # Hedefe ulaştık mı?
-        if node == dest:
-            # Yolu yeniden oluştur
-            path = Path()
-            current = dest
-            route_reversed = []
-            
-            while current is not None:
-                route_reversed.append(current)
-                current = parent.get(current)
-            
-            path.route = list(reversed(route_reversed))
-            
-            # Kenarları ve uzunluğu hesapla
-            for i in range(len(path.route) - 1):
-                u_edge, v_edge = path.route[i], path.route[i+1]
-                weight = graph[u_edge][v_edge]['weight']
-                path.edges[(u_edge, v_edge)] = weight
-                path.length += weight
-            
-            path.lb = path.length
-            return path
-        
-        # Komşuları genişlet
-        for neighbor in graph[node]:
-            # Geçerli kenar mı?
-            if neighbor in prefix_route:  # Döngü
-                continue
-            if (node, neighbor) in subspace.excluded_edges:  # Yasaklı
-                continue
-            
-            new_dist = actual_dist + graph[node][neighbor]['weight']
-            
-            # neighbor'dan hedefe tahmini mesafe (SPT kullanarak)
-            if not graph_state.isSettled[neighbor]:
-                ConstructPartialSPT(graph_state=graph_state, v=neighbor)
-            
-            estimated_to_dest = new_dist + graph_state.distances[neighbor]
-            
-            # BUDAMA: Sadece tau'dan küçük tahminli düğümleri ekle
-            if estimated_to_dest <= tau:
-                if neighbor not in distances or new_dist < distances[neighbor]:
-                    distances[neighbor] = new_dist
-                    parent[neighbor] = node
-                    heapq.heappush(pq, (estimated_to_dest, new_dist, neighbor))
-    
-    # tau'dan küçük yol bulunamadı
-    return None
-
-def DivideSubspace(subspace, computed_path, path_id, graph):
-    """
-    Alt-uzayı böl
-    
-    Bir alt-uzayda en kısa yol bulunduktan sonra, bu alt-uzayı
-    l+1 yeni alt-uzaya böl (IterBound Section 4.1)
-    
-    Her düğümde deviation yaparak yeni alt-uzaylar oluştur
-    """
-    new_subspaces = []
-    
-    # computed_path'teki her düğümde deviation yap
-    for i in range(len(computed_path.route) - 1):  # Son düğüm hariç (hedef)
-        vertex = computed_path.route[i]
-        next_in_path = computed_path.route[i + 1]
-        
-        # Bu düğüme kadar olan prefix'i oluştur
-        new_prefix = Path()
-        new_prefix.route = computed_path.route[:i+1]
-        
-        # Prefix'in kenarlarını ve uzunluğunu hesapla
-        for j in range(len(new_prefix.route) - 1):
-            u, v = new_prefix.route[j], new_prefix.route[j+1]
-            if (u, v) in computed_path.edges:
-                new_prefix.edges[(u, v)] = computed_path.edges[(u, v)]
-                new_prefix.length += computed_path.edges[(u, v)]
-        
-        # Bu düğümün TÜM alternatif kenarları için alt-uzay oluştur
-        for neighbor in graph[vertex]:
-            # Sadece path'te kullanılmayan kenarlara bak
-            if neighbor != next_in_path and neighbor not in computed_path.route[:i+1]:
-                # Yeni alt-uzay: vertex'ten sonra next_in_path kenarını yasakla
-                # ve neighbor'a git
-                new_subspace = Subspace()
-                new_subspace.path_prefix = new_prefix.copy()
-                
-                # neighbor'ı prefix'e ekle
-                new_subspace.path_prefix.route.append(neighbor)
-                edge_weight = graph[vertex][neighbor]['weight']
-                new_subspace.path_prefix.edges[(vertex, neighbor)] = edge_weight
-                new_subspace.path_prefix.length += edge_weight
-                
-                # Path'teki kenarı yasakla
-                new_subspace.excluded_edges = set()
-                new_subspace.excluded_edges.add((vertex, next_in_path))
-                
-                new_subspace.path_prefix.cls = (path_id, vertex)
-                
-                new_subspaces.append(new_subspace)
-    
-    return new_subspaces
-
-def IterBound(graph, graph_reverse, src, dest, k, alpha=1.1, max_iterations=10000):
-    """
-    IterBound Algorithm (Algorithm 4)
-    
-    Top-k en kısa yolu iteratif sınır daraltma ile bul
-    
-    Args:
-        graph: Orijinal graf
-        graph_reverse: Ters çevrilmiş graf
-        src: Kaynak düğüm
-        dest: Hedef düğüm
-        k: Bulunacak yol sayısı
-        alpha: Sınır genişletme faktörü (default 1.1)
-        max_iterations: Maximum iteration sayısı (infinite loop önleme)
-    
-    Returns:
-        result_set: k en kısa yol listesi
-    """
-    global number_of_paths_explored
-    number_of_paths_explored = 0
-    
-    # GraphState: SPT yapısı
-    graph_state = GraphState(graph_reverse=graph_reverse, destination=dest)
-    
-    # 1. İlk en kısa yolu hesapla (P0)
-    P0 = dijkstra(graph=graph, src=src, dest=dest)
-    
-    if P0 is None:
-        print(f"No path exists between {src} and {dest}")
-        return []
-    
-    print(f"Initial shortest path found: length = {P0.length}")
-    
-    # 2. Priority queue başlat
-    # Q: [(lower_bound, unique_id, subspace)]
-    Q = []
-    
-    initial_subspace = Subspace()
-    initial_subspace.path_prefix = Path()
-    initial_subspace.path_prefix.route = [src]
-    initial_subspace.path_prefix.length = 0
-    initial_subspace.computed_path = P0
-    
-    heapq.heappush(Q, (P0.length, id(initial_subspace), initial_subspace))
-    
-    # 3. Sonuç listesi ve tau başlat
-    result_set = []
-    tau = P0.length
-    i = 1  # Path counter
-    iteration_count = 0  # Infinite loop koruması
-    
-    # 4. k yol bulana kadar devam et
-    while len(result_set) < k and Q and iteration_count < max_iterations:
-        iteration_count += 1
-        
-        lb, _, subspace = heapq.heappop(Q)
-        
-        # Eğer lower bound infinity ise, bu alt-uzaydan yol bulunamaz
-        if lb == float('inf'):
-            print(f"  -> Skipping subspace with lb=inf (no path possible)")
-            continue
-        
-        if subspace.computed_path is not None:
-            # Bu alt-uzayın en kısa yolu bulunmuş
-            path = subspace.computed_path
-            result_set.append(path)
-            print(f"Path {len(result_set)} added to result: length = {path.length}")
-            
-            # Alt-uzayı böl
-            new_subspaces = DivideSubspace(subspace, path, i, graph)
-            i += 1
-            
-            for new_sub in new_subspaces:
-                # Her yeni alt-uzay için alt sınır hesapla
-                new_lb = ComputeLowerBound(new_sub, graph, graph_state)
-                
-                # Infinity check
-                if new_lb == float('inf'):
-                    continue  # Bu alt-uzayı ekleme
-                    
-                new_lb = max(new_lb, path.length)  # En az mevcut yol uzunluğu kadar
-                
-                new_sub.path_prefix.lb = new_lb
-                heapq.heappush(Q, (new_lb, id(new_sub), new_sub))
-        
-        else:
-            # Alt-uzayın en kısa yolu henüz hesaplanmamış
-            
-            # tau'yu büyüt (Iterative Bounding)
-            if Q:
-                top_lb = Q[0][0]
-                # Eğer top_lb infinity ise, tau'yu çok büyütme
-                if top_lb == float('inf'):
-                    tau = alpha * lb if lb != float('inf') else tau * alpha
-                else:
-                    tau = alpha * max(lb, top_lb)
-            else:
-                tau = alpha * lb if lb != float('inf') else tau * alpha
-            
-            print(f"Testing subspace with lb={lb:.2f}, tau={tau:.2f}")
-            
-            # TestLB: tau'dan büyük mü test et
-            computed_path = TestLowerBound(subspace, graph, graph_state, tau, dest)
-            
-            if computed_path is not None:
-                # En kısa yol bulundu ve tau'dan küçük
-                subspace.computed_path = computed_path
-                heapq.heappush(Q, (computed_path.length, id(subspace), subspace))
-                print(f"  -> Path found: length = {computed_path.length}")
-            else:
-                # tau'dan küçük yol yok, alt sınırı tau olarak güncelle
-                subspace.path_prefix.lb = tau
-                heapq.heappush(Q, (tau, id(subspace), subspace))
-                print(f"  -> No path <= tau, updated lb to {tau:.2f}")
-    
-    # Infinite loop check
-    if iteration_count >= max_iterations:
-        print(f"\n⚠️  Warning: Reached maximum iterations ({max_iterations})")
-        print(f"   Found {len(result_set)} paths out of requested {k}")
-    
-    # Queue boşsa ama k'ya ulaşmadıysak
-    if len(result_set) < k and not Q:
-        print(f"\n⚠️  Warning: Only {len(result_set)} paths exist between {src} and {dest}")
-    
-    return result_set
-
 
 def ExtendPath(path, graph, graph_state, LQ, global_PQ, covered_vertices, prefix_map):
     tail = path.tail()
@@ -669,13 +331,6 @@ def FindNextPath(graph, graph_state, global_PQ, LQ, threshold, result_set, dest,
             heapq.heappush(global_PQ, ((not current_LQ[0].isActive, current_LQ[0].lb), id(current_LQ), current_LQ))
 
         while current_path.tail() != dest:
-            LB2 = current_path.LB2(threshold=threshold, result_set=result_set)
-
-            if LB2 > current_path.lb:
-                current_path.lb = LB2
-                AdjustPath(path=current_path, global_PQ=global_PQ, LQ=LQ, result_set=result_set, dest=dest, prefix_map=prefix_map)
-                break
-
             if not ExtendPath(path=current_path, graph=graph, graph_state=graph_state, LQ=LQ, global_PQ=global_PQ, covered_vertices=covered_vertices, prefix_map=prefix_map):
                 break
 
@@ -824,70 +479,70 @@ if __name__ == "__main__":
         node_pairs.append((src, dest))
 
     
-    iter_bound_times = []
-    iter_bound_num_paths = []
+    kspd_minus_times = []
+    kspd_minus_num_paths = []
     
-    ksp_times = []
-    ksp_num_paths = []
+    kspd_times = []
+    kspd_num_paths = []
     
     for src, dest in node_pairs:
         number_of_paths_explored = 0
         start_time = datetime.datetime.now()
         
-        result_iterbound = IterBound(G, GR, src=src, dest=dest, k=30, alpha=1.1)
+        result_kspd_minus = FindKSPD(G, GR, src=src, dest=dest, k=10, threshold=0.6)
         
         end_time = datetime.datetime.now()
-        execution_time_iterbound = end_time - start_time
+        execution_time_kspd_minus = end_time - start_time
 
-        iter_bound_times.append(execution_time_iterbound)
-        iter_bound_num_paths.append(number_of_paths_explored)
+        kspd_minus_times.append(execution_time_kspd_minus)
+        kspd_minus_num_paths.append(number_of_paths_explored)
 
-        iter_bound_hop_count = average_hop_count(result_iterbound)
+        kspd_minus_hop_count = average_hop_count(result_kspd_minus)
         
         """------------------KSP------------------"""
         
         number_of_paths_explored = 0
         start_time = datetime.datetime.now()
         
-        result_ksp = FindKSPD(G, GR, src=src, dest=dest, k=30, threshold=1)
+        result_kspd = FindKSPD(G, GR, src=src, dest=dest, k=10, threshold=0.6)
         
         end_time = datetime.datetime.now()
         execution_time_kspd = end_time - start_time
         
-        ksp_times.append(execution_time_kspd)
-        ksp_num_paths.append(number_of_paths_explored)
+        kspd_times.append(execution_time_kspd)
+        kspd_num_paths.append(number_of_paths_explored)
 
-        ksp_hop_count = average_hop_count(result_ksp)
+        kspd_hop_count = average_hop_count(result_kspd)
 
 
     
-    iter_bound_avg_time = np.average(iter_bound_times)
-    iter_bound_avg_num_paths = np.average(iter_bound_num_paths)
+    kspd_minus_avg_time = np.average(kspd_minus_times)
+    kspd_minus_avg_num_paths = np.average(kspd_minus_num_paths)
 
-    ksp_avg_time = np.average(ksp_times)
-    ksp_avg_num_paths = np.average(ksp_num_paths)
+    kspd_avg_time = np.average(kspd_times)
+    kspd_avg_num_paths = np.average(kspd_num_paths)
 
-    print(f"Iterbound Times: {iter_bound_times}")
-    print(f"Iterbound num of paths: {iter_bound_num_paths}")
-    print(f"KSP Times: {ksp_times}")
-    print(f"KSP num of paths: {ksp_num_paths}")
+    print(f"kspd_minus Times: {kspd_minus_times}")
+    print(f"kspd_minus num of paths: {kspd_minus_num_paths}")
+    print(f"KSPD Times: {kspd_times}")
+    print(f"KSPD num of paths: {kspd_num_paths}")
 
     print("------------------")
 
-    print(f"Iterbound average Times: {iter_bound_avg_time}")
-    print(f"Iterbound average number of paths: {iter_bound_avg_num_paths}")
+    print(f"kspd_minus average Times: {kspd_minus_avg_time}")
+    print(f"kspd_minus average number of paths: {kspd_minus_avg_num_paths}")
 
-    print(f"KSP average Times: {ksp_avg_time}")
-    print(f"KSP average number of paths: {ksp_avg_num_paths}")
+    print(f"KSPD average Times: {kspd_avg_time}")
+    print(f"KSPD average number of paths: {kspd_avg_num_paths}")
 
-    print(f"ksp hop count: {np.average(ksp_hop_count)}")
-    print(f"iterbound hop count: {np.average(iter_bound_hop_count)}")
+    print(f"KSPD hop count: {np.average(kspd_hop_count)}")
+    print(f"kspd_minus hop count: {np.average(kspd_minus_hop_count)}")
 
 
 graph_types = ("web-google",)
 algorithms = {
-    'FindKSP': ksp_avg_num_paths,
-    'IterBound': iter_bound_avg_num_paths
+    'FindKSPD': kspd_avg_num_paths,
+    'kspd_minus': kspd_minus_avg_num_paths
 }
 
 x = np.arange(len(graph_types)) 
@@ -913,8 +568,8 @@ plt.show()
 
 graph_types = ("web-google",)
 algorithms = {
-    'FindKSP': ksp_avg_time.total_seconds(),
-    'IterBound': iter_bound_avg_time.total_seconds()
+    'FindKSPD': kspd_avg_time.total_seconds(),
+    'kspd_minus': kspd_minus_avg_time.total_seconds()
 }
 
 x = np.arange(len(graph_types)) 
