@@ -827,6 +827,13 @@ if __name__ == "__main__":
     ksp_avg_time = np.average(ksp_times)
     ksp_avg_num_paths = np.average(ksp_num_paths)
 
+    print(f"Iterbound Times: {iter_bound_times}")
+    print(f"Iterbound num of paths: {iter_bound_num_paths}")
+    print(f"KSP Times: {ksp_times}")
+    print(f"KSP num of paths: {ksp_num_paths}")
+
+    print("------------------")
+
     print(f"Iterbound average Times: {iter_bound_avg_time}")
     print(f"Iterbound average number of paths: {iter_bound_avg_num_paths}")
 
@@ -837,7 +844,7 @@ if __name__ == "__main__":
     print(f"iterbound hop count: {np.average(iter_bound_hop_count)}")
 
 
-graph_types = ("web-google")
+graph_types = ("web-google",)
 algorithms = {
     'FindKSP': ksp_avg_num_paths,
     'IterBound': iter_bound_avg_num_paths
@@ -864,10 +871,10 @@ ax.set_ylim(0, 250)
 plt.show()
 
 
-graph_types = ("web-google")
+graph_types = ("web-google",)
 algorithms = {
-    'FindKSP': ksp_avg_time,
-    'IterBound': iter_bound_avg_time
+    'FindKSP': ksp_avg_time.total_seconds(),
+    'IterBound': iter_bound_avg_time.total_seconds()
 }
 
 x = np.arange(len(graph_types)) 
