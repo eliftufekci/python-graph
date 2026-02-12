@@ -469,18 +469,6 @@ def dijkstra_simple(graph, src, dest, excluded_nodes=None):
 
 
 def FindKSPD_Yen(graph, src, dest, k, threshold):
-    """
-    Args:
-        graph: NetworkX DiGraph
-        src: source node
-        dest: destination node
-        k: number of paths to find
-        threshold: diversity threshold (τ)
-    
-    Returns:
-        result_set: list of diverse paths
-        kappa: number of evaluated paths (κ)
-    """
     global number_of_paths_explored
     number_of_paths_explored = 0
     
@@ -489,7 +477,7 @@ def FindKSPD_Yen(graph, src, dest, k, threshold):
     
     if P1 is None:
         print(f"No path exists between {src} and {dest}")
-        return [], 0
+        return []
     
     print(f"KSPD-Yen: First shortest path found, length={P1.length}")
     
@@ -499,7 +487,9 @@ def FindKSPD_Yen(graph, src, dest, k, threshold):
     # Candidate priority queue (sorted by length)
     candidates = []
     
-    # 2. İlk yoldan deviation paths oluştur (Pure Yen's)
+    kappa_generated = 0
+    
+    # 2. İlk yoldan deviation paths oluştur
     for i in range(len(P1.route) - 1):
         spur_node = P1.route[i]
         root_path = P1.route[:i+1]
@@ -512,33 +502,30 @@ def FindKSPD_Yen(graph, src, dest, k, threshold):
             root_path_obj.edges[(u, v)] = graph[u][v]['weight']
             root_path_obj.length += graph[u][v]['weight']
         
-        # Removed edges/nodes (Yen's deviation logic)
+        # Removed nodes (Yen's logic)
         removed_nodes = set()
-        
-        # Result set'teki yollarla aynı root path'i paylaşanları bul
         for path in result_set:
             if len(path.route) > i:
-                # Aynı root path mi?
                 if path.route[:i+1] == root_path:
-                    # Spur node'dan sonraki düğümü kaldır
                     if i + 1 < len(path.route):
                         removed_nodes.add(path.route[i+1])
         
-        # Root path'teki düğümleri (spur hariç) geçici kaldır
         excluded = set(root_path[:-1])
         
-        # Spur node'dan dest'e yol bul (excluded nodes ile)
+        # Spur path bul
         spur_path = dijkstra_simple(graph, spur_node, dest, 
                                    excluded_nodes=excluded.union(removed_nodes))
         
         if spur_path is not None:
-            # Total path = root_path + spur_path
+            # Total path oluştur
             total_path = Path()
             total_path.route = root_path_obj.route[:-1] + spur_path.route
             total_path.edges = root_path_obj.edges.copy()
             total_path.edges.update(spur_path.edges)
             total_path.length = root_path_obj.length + spur_path.length
             total_path.lb = total_path.length
+            
+            kappa_generated += 1
             
             # Duplicate check
             is_duplicate = False
@@ -550,24 +537,24 @@ def FindKSPD_Yen(graph, src, dest, k, threshold):
             if not is_duplicate:
                 heapq.heappush(candidates, total_path)
     
-    # 3. Ana döngü: k diverse path bulana kadar
-    kappa = 1  # İlk yol zaten bulundu
-    number_of_paths_explored = 1
+    print(f"KSPD-Yen: Initial candidates generated: {kappa_generated}")
+    
+    # 3. Ana döngü
+    evaluated_count = 0  # Pop edilen sayısı
     
     while len(result_set) < k and candidates:
         # En kısa candidate'ı al
         current_path = heapq.heappop(candidates)
-        kappa += 1
-        number_of_paths_explored += 1
+        evaluated_count += 1
         
-        print(f"KSPD-Yen: Evaluating path #{kappa}, length={current_path.length}")
+        print(f"KSPD-Yen: Evaluating path #{evaluated_count}, length={current_path.length}")
         
         # Diversity check
         if current_path.Sim(threshold, result_set):
             result_set.append(current_path)
             print(f"KSPD-Yen: Path added to result set (total: {len(result_set)})")
             
-            # Bu yoldan yeni deviation paths oluştur
+            #  Bu yoldan yeni candidates oluştur (ve sayıyı arttır!)
             for i in range(len(current_path.route) - 1):
                 spur_node = current_path.route[i]
                 root_path = current_path.route[:i+1]
@@ -602,6 +589,9 @@ def FindKSPD_Yen(graph, src, dest, k, threshold):
                     total_path.length = root_path_obj.length + spur_path.length
                     total_path.lb = total_path.length
                     
+                    #HER candidate generation'da say!
+                    kappa_generated += 1
+                    
                     # Duplicate check
                     is_duplicate = False
                     for existing in candidates:
@@ -619,11 +609,13 @@ def FindKSPD_Yen(graph, src, dest, k, threshold):
         else:
             print(f"KSPD-Yen: Path rejected (too similar)")
     
-    print(f"\nKSPD-Yen: Total evaluated paths (κ): {kappa}")
-    print(f"\nKSPD-Yen: Total evaluated paths (digeri): {number_of_paths_explored}")
-
+    number_of_paths_explored = kappa_generated
+    
+    print(f"\nKSPD-Yen: Total GENERATED candidates (κ): {kappa_generated}")
+    print(f"KSPD-Yen: Total EVALUATED (popped): {evaluated_count}")
+    print(f"KSPD-Yen: Diverse paths found: {len(result_set)}")
+    
     return result_set
-
 
 
 if __name__ == "__main__":
@@ -638,7 +630,7 @@ if __name__ == "__main__":
     GR = reverse(G)
     node_pairs = []
 
-    for i in range(0,1):
+    for i in range(0,5):
         src = random.choice(list(G.nodes()))
         reachable = nx.descendants(G, src)
         
@@ -665,7 +657,7 @@ if __name__ == "__main__":
         end_time = datetime.datetime.now()
         execution_time_kspd_yen = end_time - start_time
 
-        kspd_yen_times.append(execution_time_kspd_yen)
+        kspd_yen_times.append(execution_time_kspd_yen.total_seconds())
         kspd_yen_num_paths.append(number_of_paths_explored)
 
         kspd_yen_hop_count = average_hop_count(result_kspd_yen)
@@ -680,7 +672,7 @@ if __name__ == "__main__":
         end_time = datetime.datetime.now()
         execution_time_kspd = end_time - start_time
         
-        kspd_times.append(execution_time_kspd)
+        kspd_times.append(execution_time_kspd.total_seconds())
         kspd_num_paths.append(number_of_paths_explored)
 
         kspd_hop_count = average_hop_count(result_kspd)
@@ -739,8 +731,8 @@ plt.show()
 
 graph_types = ("web-google",)
 algorithms = {
-    'FindKSPD': kspd_avg_time.total_seconds(),
-    'kspd_yen': kspd_yen_avg_time.total_seconds()
+    'FindKSPD': kspd_avg_time,
+    'kspd_yen': kspd_yen_avg_time
 }
 
 x = np.arange(len(graph_types)) 
