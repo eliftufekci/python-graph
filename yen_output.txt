@@ -1,0 +1,17 @@
+=== Pair: src=230663, dest=504863 ===
+KSPD-Yen: result_set=2, explored=30
+KSPD-Yen: result_set=3, explored=45
+KSPD-Yen: result_set=4, explored=92
+KSPD-Yen: result_set=5, explored=156
+KSPD-Yen: result_set=6, explored=204
+KSPD-Yen: result_set=7, explored=332
+KSPD-Yen: result_set=8, explored=701
+KSPD-Yen: result_set=9, explored=746
+KSPD-Yen: result_set=10, explored=1877
+Yen done: 10 paths, 1877 explored, 6513.26s
+
+kspd_yen_times
+[6513.263911]
+
+kspd_yen_hop_count
+15.7
