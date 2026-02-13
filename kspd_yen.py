@@ -701,6 +701,8 @@ for attribute, measurement in algorithms.items():
 ax.set_ylabel('Avg # of paths')
 ax.set_xticks(x + width, graph_types)
 ax.legend(loc='upper left', ncols=3)
+plt.yscale('symlog')
+
 
 plt.show()
 
@@ -727,5 +729,6 @@ for attribute, measurement in algorithms.items():
 ax.set_ylabel('Avg Running Time')
 ax.set_xticks(x + width, graph_types)
 ax.legend(loc='upper left', ncols=3)
+plt.yscale('symlog')
 
 plt.show()
